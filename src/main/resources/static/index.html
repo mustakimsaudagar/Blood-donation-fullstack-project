@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f6f2">
+  <title>BloodBridge | Donation coordination</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#dashboard" aria-label="BloodBridge dashboard">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-name">blood<span>bridge</span></span>
+      </a>
+
+      <div class="workspace-label">WORKSPACE</div>
+      <nav class="main-nav">
+        <button class="nav-item active" data-page="dashboard"><span class="nav-icon icon-grid" aria-hidden="true"></span>Overview</button>
+        <button class="nav-item" data-page="donors"><span class="nav-icon icon-users" aria-hidden="true"></span>Donors <span id="donor-nav-count" class="nav-count">1,284</span></button>
+        <button class="nav-item" data-page="requests"><span class="nav-icon icon-heart" aria-hidden="true"></span>Blood requests <span id="request-nav-count" class="nav-count alert-count">12</span></button>
+        <button class="nav-item" data-page="inventory"><span class="nav-icon icon-drop" aria-hidden="true"></span>Inventory</button>
+        <button class="nav-item" data-page="appointments"><span class="nav-icon icon-grid" aria-hidden="true"></span>Appointments <span id="appointment-nav-count" class="nav-count">0</span></button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note">
+        <span class="note-pulse"></span>
+        <div><strong>Every drop counts.</strong><span>Thank you for showing up.</span></div>
+      </div>
+      <button class="profile-button" type="button" aria-label="Signed in as Sahana Bhosale">
+        <span class="avatar avatar-profile">SB</span>
+        <span class="profile-copy"><strong>Sahana Bhosale</strong><span>Hospital coordinator</span></span>
+        <span class="profile-more" aria-hidden="true">···</span>
+      </button>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>blood<span>bridge</span></span></div>
+        <div class="breadcrumb"><span>Workspace</span><span class="crumb-divider">/</span><strong id="breadcrumb-current">Overview</strong></div>
+        <div class="topbar-actions">
+          <span class="connection-state"><span class="connection-dot"></span><span id="connection-label">Demo workspace</span></span>
+          <button class="icon-button notification-button" type="button" aria-label="Notifications"><span class="icon-bell" aria-hidden="true"></span><i></i></button>
+          <span class="avatar avatar-small">SB</span>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <div id="page-content"></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="request-modal" hidden>
+    <section class="request-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <div><span class="eyebrow">NEW BLOOD REQUEST</span><h2 id="modal-title">Let's find a match.</h2></div>
+        <button class="icon-button close-modal" type="button" aria-label="Close request form">×</button>
+      </div>
+      <div class="wizard-progress" aria-label="Request progress">
+        <span class="wizard-step active" data-step-indicator="1"><i>1</i>Patient</span><b></b>
+        <span class="wizard-step" data-step-indicator="2"><i>2</i>Blood need</span><b></b>
+        <span class="wizard-step" data-step-indicator="3"><i>3</i>Review</span>
+      </div>
+      <form id="request-form">
+        <div class="wizard-panel" data-panel="1">
+          <label>Patient name<input name="patientName" placeholder="Patient name" autocomplete="off" required></label>
+          <label>Hospital or care center<input name="hospital" placeholder="e.g. City General Hospital" autocomplete="organization" required></label>
+          <label>City<input name="city" placeholder="e.g. Pune" autocomplete="address-level2" value="Pune" required></label>
+        </div>
+        <div class="wizard-panel" data-panel="2" hidden>
+          <div class="form-row">
+            <label>Blood group<select name="bloodGroup" required><option value="O-">O−</option><option value="O+">O+</option><option value="A-">A−</option><option value="A+">A+</option><option value="B-">B−</option><option value="B+">B+</option><option value="AB-">AB−</option><option value="AB+">AB+</option></select></label>
+            <label>Units needed<input name="units" type="number" min="1" max="20" value="2" required></label>
+          </div>
+          <label>How soon is it needed?<select name="urgency"><option value="STANDARD">Within 48 hours</option><option value="URGENT">Urgent · within 12 hours</option><option value="CRITICAL">Critical · immediately</option></select></label>
+          <p class="form-help">Matches use red-cell compatibility and a 56-day minimum interval. Clinical teams must verify every match before transfusion.</p>
+        </div>
+        <div class="wizard-panel" data-panel="3" hidden>
+          <div id="request-review" class="review-summary"></div>
+          <label class="verification-check"><input type="checkbox" name="verified" required><span>I confirm this request is being submitted by an authorized care provider.</span></label>
+          <p class="form-help">This demo does not send email or SMS alerts and does not verify uploaded documents.</p>
+        </div>
+        <div class="modal-actions">
+          <button class="button button-quiet" id="wizard-back" type="button" hidden>Back</button>
+          <span class="modal-spacer"></span>
+          <button class="button button-quiet close-modal" type="button">Cancel</button>
+          <button class="button button-primary" id="wizard-next" type="button">Continue <span aria-hidden="true">→</span></button>
+          <button class="button button-primary" id="wizard-submit" type="submit" hidden>Submit request <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="donor-modal" hidden>
+    <section class="request-modal" role="dialog" aria-modal="true" aria-labelledby="donor-modal-title">
+      <div class="modal-head">
+        <div><span class="eyebrow">DONOR NETWORK</span><h2 id="donor-modal-title">Register a donor</h2></div>
+        <button class="icon-button close-modal" type="button" aria-label="Close donor form">×</button>
+      </div>
+      <form id="donor-form">
+        <input name="donorId" type="hidden">
+        <div class="management-form">
+          <label>Full name<input name="name" maxlength="120" autocomplete="name" required></label>
+          <div class="form-row">
+            <label>Blood group<select name="bloodGroup" required><option value="O-">O−</option><option value="O+">O+</option><option value="A-">A−</option><option value="A+">A+</option><option value="B-">B−</option><option value="B+">B+</option><option value="AB-">AB−</option><option value="AB+">AB+</option></select></label>
+            <label>City<input name="city" maxlength="100" autocomplete="address-level2" required></label>
+          </div>
+          <label>Phone<input name="phone" type="tel" maxlength="30" autocomplete="tel" required></label>
+          <label>Last donation date <span class="optional-label">(optional)</span><input name="lastDonation" type="date"></label>
+        </div>
+        <div class="modal-actions">
+          <span class="modal-spacer"></span>
+          <button class="button button-quiet close-modal" type="button">Cancel</button>
+          <button class="button button-primary" type="submit">Save donor</button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="inventory-modal" hidden>
+    <section class="request-modal" role="dialog" aria-modal="true" aria-labelledby="inventory-modal-title">
+      <div class="modal-head">
+        <div><span class="eyebrow">AUDITED STOCK CHANGE</span><h2 id="inventory-modal-title">Adjust inventory</h2></div>
+        <button class="icon-button close-modal" type="button" aria-label="Close inventory form">×</button>
+      </div>
+      <form id="inventory-form">
+        <div class="management-form">
+          <label>Blood group<select name="bloodGroup" required><option value="O-">O−</option><option value="O+">O+</option><option value="A-">A−</option><option value="A+">A+</option><option value="B-">B−</option><option value="B+">B+</option><option value="AB-">AB−</option><option value="AB+">AB+</option></select></label>
+          <label>Unit adjustment<input name="unitsDelta" type="number" step="1" required placeholder="e.g. 5 to add or -2 to remove"><span class="form-help">Use a positive number to add stock or a negative number to remove it. Stock cannot go below zero.</span></label>
+          <label>Reason<input name="reason" maxlength="240" required placeholder="e.g. Blood donation received"></label>
+        </div>
+        <div class="modal-actions">
+          <span class="modal-spacer"></span>
+          <button class="button button-quiet close-modal" type="button">Cancel</button>
+          <button class="button button-primary" type="submit">Apply adjustment</button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="appointment-modal" hidden>
+    <section class="request-modal" role="dialog" aria-modal="true" aria-labelledby="appointment-modal-title">
+      <div class="modal-head">
+        <div><span class="eyebrow">DONATION SCHEDULING</span><h2 id="appointment-modal-title">Schedule an appointment</h2></div>
+        <button class="icon-button close-modal" type="button" aria-label="Close appointment form">×</button>
+      </div>
+      <form id="appointment-form">
+        <div class="management-form">
+          <label>Eligible donor<select name="donorId" required></select></label>
+          <label>Link to an open blood request <span class="optional-label">(optional)</span><select name="requestId"><option value="">No linked request</option></select></label>
+          <label>Date and time<input name="scheduledAt" type="datetime-local" required></label>
+          <label>Donation location<input name="location" maxlength="160" autocomplete="street-address" required placeholder="Hospital or donation center"></label>
+          <p class="form-help">Only active, eligible donors can be scheduled. Linked requests must be in the same city and have a compatible blood group.</p>
+        </div>
+        <div class="modal-actions">
+          <span class="modal-spacer"></span>
+          <button class="button button-quiet close-modal" type="button">Cancel</button>
+          <button class="button button-primary" type="submit">Schedule</button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
